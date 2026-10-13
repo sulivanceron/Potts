@@ -1,0 +1,766 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<base target="_top">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Solicitud de Caja Chica — Grupo Vizcarra</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500;600&display=swap">
+<style>
+/* ============================================================
+   Paleta Grupo Vizcarra. Un solo lugar donde cambiar colores.
+   El azul marino y el dorado son los del formulario de siempre.
+   ============================================================ */
+:root{
+  --bg:#F2F3F6; --surface:#FFFFFF; --surface-2:#F7F8FA;
+  --ink:#171A1F; --ink-2:#474E58; --muted:#717984;
+  --line:#DADEE4; --line-2:#C4CAD3;
+
+  /* Azul marino: es el color con el que se señala todo. */
+  --marca-1:#12294A; --marca-2:#1D4A7A;
+  --accent:#1D4A7A; --accent-ink:#12365C; --accent-soft:#E3EBF4;
+
+  /* Dorado: solo para el botón de enviar, como en el formulario viejo. */
+  --oro:#DFA32A; --oro-2:#C68D18; --oro-texto:#2B1D04;
+
+  --flag:#8A5512; --flag-soft:#F7EEDF;
+  --mal:#B3261E; --mal-soft:#FBEAE8;
+  --shadow:0 1px 2px rgba(18,41,74,.07), 0 8px 24px -12px rgba(18,41,74,.22);
+  --r:10px;
+}
+*{box-sizing:border-box}
+html,body{margin:0; padding:0}
+body{
+  background:var(--bg); color:var(--ink);
+  font-family:'IBM Plex Sans',system-ui,-apple-system,'Segoe UI',sans-serif;
+  font-size:15px; line-height:1.5;
+}
+
+/* ---------- encabezado de marca ---------- */
+.marca{
+  background:linear-gradient(135deg,var(--marca-1),var(--marca-2));
+  color:#fff; text-align:center; padding:22px 16px 24px;
+}
+.marca .grupo{
+  font-size:11px; font-weight:600; letter-spacing:.22em;
+  text-transform:uppercase; opacity:.78;
+}
+.marca h1{margin:6px 0 2px; font-size:24px; font-weight:600; letter-spacing:-.01em}
+.marca .sub{font-size:12.5px; opacity:.72}
+
+/* ---------- estructura ---------- */
+.wrap{
+  max-width:660px; margin:0 auto;
+  padding:22px 16px 40px;
+  display:flex; flex-direction:column; gap:18px;
+}
+.step{
+  background:var(--surface); border:1px solid var(--line);
+  border-radius:var(--r); padding:0 16px 17px;
+  display:flex; flex-direction:column; gap:12px;
+  overflow:hidden;                      /* para que la barra no se salga de la esquina */
+}
+/* Barra de título: azul de lado a lado con letras blancas. Los márgenes
+   negativos la sacan hasta las orillas de la tarjeta. */
+.step-head{
+  display:flex; align-items:center; gap:10px;
+  margin:0 -16px; padding:11px 16px;
+  background:var(--marca-2); color:#fff;
+}
+.num{
+  flex:none; width:21px; height:21px; border-radius:6px;
+  background:rgba(255,255,255,.22); color:#fff;
+  font-family:'IBM Plex Mono',ui-monospace,monospace;
+  font-size:11px; font-weight:600; display:grid; place-items:center;
+}
+.step-head h2{
+  margin:0; font-size:12px; font-weight:600;
+  letter-spacing:.07em; text-transform:uppercase; color:#fff;
+}
+.row{display:flex; gap:12px; flex-wrap:wrap}
+.row > *{flex:1 1 220px; min-width:0}
+.field{display:flex; flex-direction:column; gap:5px; min-width:0}
+label{font-size:12px; font-weight:500; color:var(--muted)}
+label .req{color:var(--mal)}
+select,input,textarea{
+  width:100%; font:inherit; font-size:14.5px; color:var(--ink);
+  background:var(--surface-2); border:1px solid var(--line-2);
+  border-radius:8px; padding:9px 10px;
+}
+textarea{resize:vertical; min-height:64px}
+select:focus-visible,input:focus-visible,textarea:focus-visible,
+button:focus-visible{outline:2px solid var(--accent); outline-offset:2px}
+select:disabled,input:disabled,textarea:disabled{opacity:.55; cursor:not-allowed}
+.hint{font-size:12px; color:var(--muted); margin:0}
+.hint b{color:var(--ink-2); font-weight:600}
+
+/* ---------- lista de sucursales ---------- */
+.sucs{
+  border:1px solid var(--line-2); border-radius:8px;
+  background:var(--surface-2); overflow:hidden;
+}
+.sucs .fijo{border-bottom:1px solid var(--line-2); background:var(--surface)}
+.sucs .scroll{max-height:186px; overflow-y:auto}
+.chk{
+  display:flex; align-items:center; gap:9px;
+  padding:7px 11px; cursor:pointer; font-size:14px;
+}
+.chk:hover{background:var(--accent-soft)}
+.chk input{width:auto; margin:0; flex:none}
+.chk .pers{
+  margin-left:auto; font-size:10px; font-weight:600; letter-spacing:.06em;
+  text-transform:uppercase; color:var(--flag);
+  background:var(--flag-soft); border-radius:99px; padding:1px 7px;
+}
+
+/* ---------- subcuenta: buscador + menú normal ---------- */
+.count{
+  font-family:'IBM Plex Mono',ui-monospace,monospace;
+  font-size:11px; color:var(--muted); font-variant-numeric:tabular-nums;
+}
+/* El menú cuando ya hay una subcuenta escogida: se nota de un vistazo. */
+select.listo{
+  border-color:var(--accent); background:var(--accent-soft);
+  color:var(--ink); font-weight:500;
+}
+
+/* ---------- cuenta armada ---------- */
+.acct{
+  background:var(--surface); border:1px solid var(--line);
+  border-radius:var(--r); padding:0 16px 16px;
+  display:flex; flex-direction:column; gap:12px; box-shadow:var(--shadow);
+  overflow:hidden;
+}
+.acct-top{
+  display:flex; align-items:center; gap:10px; flex-wrap:wrap;
+  margin:0 -16px; padding:11px 16px;
+  background:var(--marca-2); color:#fff;
+}
+.acct-top h2{
+  margin:0; font-size:12px; font-weight:600;
+  letter-spacing:.07em; text-transform:uppercase; color:#fff;
+}
+.kind{
+  font-size:10.5px; font-weight:600; letter-spacing:.06em; text-transform:uppercase;
+  padding:2px 8px; border-radius:99px;
+  color:#fff; background:rgba(255,255,255,.22);
+}
+.segs{display:flex; align-items:flex-start; gap:4px; flex-wrap:wrap}
+.seg{display:flex; flex-direction:column; gap:3px; min-width:0}
+.seg .v{
+  font-family:'IBM Plex Mono',ui-monospace,monospace;
+  font-size:25px; font-weight:600; line-height:1.1; color:var(--ink);
+  font-variant-numeric:tabular-nums;
+}
+.seg .v.off{color:var(--line-2)}
+.seg .k{font-size:10px; color:var(--muted); line-height:1.3; max-width:14ch; overflow-wrap:break-word}
+.readout{font-size:13px; color:var(--ink-2); border-top:1px solid var(--line); padding-top:10px; margin:0}
+.readout .t{color:var(--muted)}
+
+/* ---------- envío ---------- */
+.enviar{
+  width:100%; font:inherit; font-size:15px; font-weight:700;
+  color:var(--oro-texto); background:var(--oro); border:0;
+  border-radius:9px; padding:13px; cursor:pointer;
+  letter-spacing:.01em;
+}
+.enviar:hover:not(:disabled){background:var(--oro-2)}
+.enviar:disabled{opacity:.55; cursor:progress}
+.aviso{
+  border-radius:9px; padding:12px 14px; font-size:14px;
+  border:1px solid transparent; margin:0;
+}
+.aviso.ok{background:var(--accent-soft); border-color:var(--accent); color:var(--accent-ink)}
+.aviso.mal{background:var(--mal-soft); border-color:var(--mal); color:var(--mal)}
+.aviso .folio{
+  font-family:'IBM Plex Mono',ui-monospace,monospace;
+  font-weight:600; font-size:16px;
+}
+.cargando{text-align:center; color:var(--muted); padding:28px 0; font-size:14px}
+[hidden]{display:none !important}
+</style>
+</head>
+<body>
+
+<header class="marca">
+  <div class="grupo">Grupo Vizcarra</div>
+  <h1>Solicitud de Caja Chica</h1>
+  <div class="sub">Sistema de Control de Caja Chica</div>
+</header>
+
+<div class="wrap">
+
+  <p class="cargando" id="cargando">Cargando el catálogo…</p>
+
+  <form id="forma" hidden>
+
+    <div class="wrap" style="padding:0; max-width:none; gap:18px">
+
+      <!-- 1 -->
+      <section class="step">
+        <div class="step-head"><span class="num">1</span><h2>Quién pide y de dónde sale el dinero</h2></div>
+        <div class="field">
+          <label for="lider">Líder que solicita (correo) <span class="req">*</span></label>
+          <select id="lider" required></select>
+        </div>
+        <div class="row">
+          <div class="field">
+            <label for="caja">Caja que paga <span class="req">*</span></label>
+            <select id="caja" required></select>
+          </div>
+          <div class="field">
+            <label for="area">Área solicitante <span class="req">*</span></label>
+            <select id="area" required></select>
+          </div>
+        </div>
+        <p class="hint">De dónde sale el efectivo <b>físicamente</b>. Si lo entrega Omar, es <b>CEDIS SAN PABLO</b>.</p>
+      </section>
+
+      <!-- 2 -->
+      <section class="step">
+        <div class="step-head"><span class="num">2</span><h2>De quién es el gasto</h2></div>
+        <label>Sucursal(es) a las que se aplica el gasto <span class="req">*</span></label>
+        <p class="hint">Es a quién se le carga el gasto, no de dónde sale el dinero. Puedes marcar más de una. Si marcas un familiar con catálogo propio, sus cuentas personales son las que aparecen abajo. Si no se carga a ninguna sucursal, marca <b>Ninguna</b>.</p>
+        <div class="sucs">
+          <div class="fijo">
+            <label class="chk"><input type="checkbox" id="todas"> <span>Todas las sucursales</span></label>
+            <label class="chk"><input type="checkbox" id="ninguna"> <span>Ninguna (no se carga a ninguna sucursal)</span></label>
+          </div>
+          <div class="scroll" id="listaSucs"></div>
+        </div>
+        <p class="hint" id="avisoCatalogo"></p>
+      </section>
+
+      <!-- 3 -->
+      <section class="step">
+        <div class="step-head"><span class="num">3</span><h2>Qué se va a pagar</h2></div>
+        <div class="field">
+          <label for="fam">Familia <span class="req">*</span></label>
+          <select id="fam" required></select>
+        </div>
+        <div class="field">
+          <label for="busca">Buscar subcuenta <span class="count" id="cuantas"></span></label>
+          <input id="busca" type="text" autocomplete="off" placeholder="Escribe parte del nombre para acortar la lista">
+        </div>
+        <div class="field">
+          <label for="sub">Subcuenta <span class="req">*</span></label>
+          <select id="sub" required></select>
+        </div>
+      </section>
+
+      <!-- 4 -->
+      <section class="step">
+        <div class="step-head"><span class="num">4</span><h2>Los datos de la solicitud</h2></div>
+        <div class="row">
+          <div class="field">
+            <label for="colab">Colaborador (nombre completo) <span class="req">*</span></label>
+            <input id="colab" type="text" placeholder="Nombre de quien recibe el efectivo" required>
+          </div>
+          <div class="field">
+            <label for="prov">Proveedor</label>
+            <input id="prov" type="text" placeholder="A quién se le paga">
+          </div>
+        </div>
+        <div class="field">
+          <label for="imp">Importe solicitado <span class="req">*</span></label>
+          <input id="imp" type="number" step="0.01" min="0.01" placeholder="0.00" required>
+        </div>
+        <div class="field">
+          <label for="desc">Descripción / concepto <span class="req">*</span></label>
+          <textarea id="desc" placeholder="Para qué es el dinero" required></textarea>
+        </div>
+        <div class="field">
+          <label for="files">Comprobantes o cotizaciones (opcional)</label>
+          <input id="files" type="file" multiple>
+        </div>
+        <p class="hint">Colaborador, proveedor y descripción se guardan en <b>MAYÚSCULAS</b> automáticamente.</p>
+      </section>
+
+      <!-- cuenta -->
+      <section class="acct" aria-live="polite">
+        <div class="acct-top">
+          <h2>Cuenta que se va a generar</h2>
+          <span class="kind" id="kind">—</span>
+        </div>
+        <div class="segs" id="segs"></div>
+        <p class="readout" id="readout"></p>
+      </section>
+
+      <p class="aviso mal" id="avisoMal" hidden></p>
+      <p class="aviso ok"  id="avisoOk"  hidden></p>
+
+      <button type="submit" class="enviar" id="btn">Enviar solicitud</button>
+
+    </div>
+  </form>
+</div>
+
+<script>
+(function () {
+  'use strict';
+
+  /* Nombre del bloque del catálogo que NO pertenece a ninguna sucursal
+     (traspasos, depósitos a banco, préstamos a empleados). El servidor ya
+     se lo pegó a todas las unidades, así que aquí solo se usa para saber
+     que ese renglón no depende del "se aplica a". */
+  var BLOQUE_COMUN = ['Traspaso de Efectivo', 'Depósito a Banco', 'Préstamo a Empleado'];
+
+  var CAT = null;        // lo que devuelve getCatalogoSolicitud()
+  var LIDERES = [];      // lo que devuelve getLideres()
+  var elegida = null;    // la entrada del catálogo que se escogió
+  var enviando = false;
+
+  var $ = function (id) { return document.getElementById(id); };
+
+  /* ============================================================
+     Arranque: se piden las dos cosas al servidor.
+     ============================================================ */
+  google.script.run
+    .withSuccessHandler(function (cat) {
+      CAT = cat || {};
+      google.script.run
+        .withSuccessHandler(function (l) { LIDERES = l || []; arranca(); })
+        .withFailureHandler(function (e) { LIDERES = []; arranca(); })
+        .getLideres();
+    })
+    .withFailureHandler(function (e) {
+      $('cargando').textContent = 'No se pudo cargar el catálogo: ' + e.message;
+    })
+    .getCatalogoSolicitud();
+
+
+  function arranca() {
+    llenaLideres();
+    llenaCajas();
+    llenaSucursales();
+    recargaFamilias();
+
+    $('lider').addEventListener('change', onLider);
+    $('caja').addEventListener('change', recargaFamilias);
+    $('fam').addEventListener('change', recargaSub);
+    $('busca').addEventListener('input', pintaOpciones);
+    $('sub').addEventListener('change', onSub);
+    $('todas').addEventListener('change', onTodas);
+    $('ninguna').addEventListener('change', onNinguna);
+    $('forma').addEventListener('submit', enviar);
+
+    $('cargando').hidden = true;
+    $('forma').hidden = false;
+  }
+
+
+  /* ============================================================
+     Menús de arriba
+     ============================================================ */
+  function opcion(sel, valor, texto) {
+    var o = document.createElement('option');
+    o.value = valor;
+    o.textContent = texto;
+    sel.appendChild(o);
+  }
+
+  function llenaLideres() {
+    var sel = $('lider');
+    sel.innerHTML = '';
+    opcion(sel, '', 'Selecciona quién solicita…');
+    LIDERES.forEach(function (l, i) {
+      opcion(sel, String(i), l.lider + ' — ' + l.area);
+    });
+
+    var areas = [];
+    LIDERES.forEach(function (l) {
+      if (areas.indexOf(l.area) < 0) areas.push(l.area);
+    });
+    var sa = $('area');
+    sa.innerHTML = '';
+    opcion(sa, '', 'Selecciona el área…');
+    areas.forEach(function (a) { opcion(sa, a, a); });
+  }
+
+  function onLider() {
+    var i = $('lider').value;
+    if (i === '') return;
+    var l = LIDERES[Number(i)];
+    if (l && l.area) $('area').value = l.area;   // se puede cambiar a mano
+  }
+
+  function llenaCajas() {
+    var sel = $('caja');
+    sel.innerHTML = '';
+    opcion(sel, '', 'Selecciona la caja…');
+    (CAT.cajasQuePagan || []).forEach(function (c) { opcion(sel, c, c); });
+  }
+
+  function llenaSucursales() {
+    var cont = $('listaSucs');
+    cont.innerHTML = '';
+    var personales = CAT.personales || [];
+
+    (CAT.sucursales || []).forEach(function (s) {
+      var esPersonal = personales.indexOf(s) >= 0;
+      var lab = document.createElement('label');
+      lab.className = 'chk';
+
+      var chk = document.createElement('input');
+      chk.type = 'checkbox';
+      chk.value = s;
+      chk.className = 'suc';
+      chk.addEventListener('change', onSuc);
+
+      var txt = document.createElement('span');
+      txt.textContent = s;
+
+      lab.appendChild(chk);
+      lab.appendChild(txt);
+
+      if (esPersonal) {
+        var et = document.createElement('span');
+        et.className = 'pers';
+        et.textContent = 'catálogo propio';
+        lab.appendChild(et);
+      }
+      cont.appendChild(lab);
+    });
+  }
+
+  function marcadas() {
+    return [].slice.call(document.querySelectorAll('.suc'))
+      .filter(function (c) { return c.checked; })
+      .map(function (c) { return c.value; });
+  }
+
+  function onTodas() {
+    if ($('todas').checked) {
+      $('ninguna').checked = false;
+      document.querySelectorAll('.suc').forEach(function (c) { c.checked = false; });
+    }
+    recargaFamilias();
+  }
+
+  function onNinguna() {
+    if ($('ninguna').checked) {
+      $('todas').checked = false;
+      document.querySelectorAll('.suc').forEach(function (c) { c.checked = false; });
+    }
+    recargaFamilias();
+  }
+
+  function onSuc() {
+    if (marcadas().length) {
+      $('todas').checked = false;
+      $('ninguna').checked = false;
+    }
+    recargaFamilias();
+  }
+
+
+  /* ============================================================
+     Cuál catálogo manda
+     ============================================================
+     Las cuentas salen de la sucursal a la que SE APLICA el gasto, no de la
+     caja que paga. Si hay varias marcadas o ninguna, se cae a la caja. */
+  function claveCatalogo() {
+    var sucs = marcadas();
+    var personales = CAT.personales || [];
+
+    // Un familiar con catálogo propio siempre gana.
+    for (var i = 0; i < sucs.length; i++) {
+      if (personales.indexOf(sucs[i]) >= 0) return sucs[i];
+    }
+    if (sucs.length === 1) return sucs[0];
+    return $('caja').value || '';
+  }
+
+  function listaActiva() {
+    var clave = claveCatalogo();
+    return ((CAT.entries || {})[clave]) || [];
+  }
+
+
+  /* ============================================================
+     Familia y subcuenta
+     ============================================================ */
+  function familias() {
+    var vistas = {}, out = [];
+    listaActiva().forEach(function (e) {
+      if (vistas[e.concepto]) return;
+      vistas[e.concepto] = true;
+      out.push(e.concepto);
+    });
+    return out;
+  }
+
+  function opciones() {
+    var fam = $('fam').value;
+    return listaActiva().filter(function (e) { return e.concepto === fam; });
+  }
+
+  function esComun(fam) { return BLOQUE_COMUN.indexOf(fam) >= 0; }
+
+  function recargaFamilias() {
+    var clave = claveCatalogo();
+    var f = familias();
+    var sel = $('fam');
+    var antes = sel.value;
+
+    sel.innerHTML = '';
+    opcion(sel, '', 'Selecciona la familia…');
+    f.forEach(function (x) { opcion(sel, x, x); });
+    if (antes && f.indexOf(antes) >= 0) sel.value = antes;
+
+    $('avisoCatalogo').innerHTML = clave
+      ? 'Las cuentas de abajo son las de <b>' + esc(clave) + '</b> (' + f.length + ' familias).'
+      : 'Escoge la caja que paga o marca una sucursal para ver las cuentas.';
+
+    recargaSub();
+  }
+
+  function recargaSub() {
+    elegida = null;
+    $('busca').value = '';
+    var hay = !!$('fam').value;
+    $('busca').disabled = !hay;
+    $('sub').disabled = !hay;
+    pintaOpciones();
+    pintaCuenta();
+  }
+
+  /* Llena el menú de subcuentas, filtrado por lo que se haya tecleado.
+     Es un <select> normal: lo que se escoge se queda ahí a la vista y no
+     depende de ningún invento. */
+  function pintaOpciones() {
+    var sel = $('sub');
+    var antes = sel.value;
+    sel.innerHTML = '';
+    sel.classList.remove('listo');
+
+    if (!$('fam').value) {
+      opcion(sel, '', 'Primero escoge la familia');
+      $('cuantas').textContent = '';
+      elegida = null;
+      pintaCuenta();
+      return;
+    }
+
+    var q = $('busca').value.trim().toLowerCase();
+    var todas = opciones();
+    var vis = q ? todas.filter(function (e) {
+      return (e.subconcepto + ' ' + e.cuenta).toLowerCase().indexOf(q) >= 0;
+    }) : todas;
+
+    $('cuantas').textContent = q
+      ? vis.length + ' de ' + todas.length
+      : todas.length + (todas.length === 1 ? ' opción' : ' opciones');
+
+    if (!vis.length) {
+      opcion(sel, '', 'Nada con “' + $('busca').value.trim() + '”');
+      elegida = null;
+      pintaCuenta();
+      return;
+    }
+
+    opcion(sel, '', 'Selecciona la subcuenta…');
+    vis.forEach(function (e) {
+      opcion(sel, String(e.idx), (e.subconcepto || e.concepto) + '  ·  ' + e.cuenta);
+    });
+
+    // Si la que estaba escogida sigue en la lista, se respeta.
+    if (antes && sel.querySelector('option[value="' + antes + '"]')) {
+      sel.value = antes;
+    }
+    onSub();
+  }
+
+  function onSub() {
+    var v = $('sub').value;
+    if (v === '') {
+      elegida = null;
+      $('sub').classList.remove('listo');
+    } else {
+      var lista = listaActiva();
+      elegida = null;
+      for (var i = 0; i < lista.length; i++) {
+        if (String(lista[i].idx) === v) { elegida = lista[i]; break; }
+      }
+      $('sub').classList.toggle('listo', !!elegida);
+    }
+    pintaCuenta();
+  }
+
+  function esc(s) {
+    return String(s == null ? '' : s).replace(/[&<>"]/g, function (m) {
+      return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[m];
+    });
+  }
+
+  function seg(valor, etiqueta, apagado) {
+    return '<span class="seg"><span class="v' + (apagado ? ' off' : '') + '">' +
+           esc(valor) + '</span><span class="k">' + esc(etiqueta) + '</span></span>';
+  }
+
+  function pintaCuenta() {
+    if (!elegida) {
+      $('kind').textContent = '—';
+      $('segs').innerHTML = seg('—', 'Falta escoger la subcuenta', true);
+      $('readout').innerHTML = '<span class="t">Escoge la familia y la subcuenta de arriba.</span>';
+      return;
+    }
+
+    var n = String(elegida.cuenta);
+    var gasto = n.charAt(0) === '6';
+    $('kind').textContent = gasto ? 'Gasto' : 'Balance · Activo';
+
+    /* Las cuentas de ContaSOL son 8 dígitos: 6 03 01 010. Si algún día
+       vienen con otro largo, se muestra el número completo sin partir. */
+    if (/^\d{8}$/.test(n)) {
+      var p = [n.slice(0, 1), n.slice(1, 3), n.slice(3, 5), n.slice(5)];
+      var et = gasto
+        ? ['Gastos', claveCatalogo(), $('fam').value, elegida.subconcepto]
+        : ['Activo', 'Activo circulante', $('fam').value, elegida.subconcepto];
+      var html = '';
+      for (var i = 0; i < 4; i++) html += seg(p[i], et[i] || '');
+      $('segs').innerHTML = html;
+    } else {
+      $('segs').innerHTML = seg(n, elegida.subconcepto || '');
+    }
+
+    var comun = esComun($('fam').value);
+    $('readout').innerHTML = comun
+      ? '<span class="t">Sale de</span> <b>' + esc($('caja').value || '—') + '</b> · ' +
+        '<span class="t">aquí no interviene el “se aplica a”</span><br>' +
+        '<span class="t">En el Concentrado queda:</span> ' +
+        esc($('fam').value) + ' — ' + esc(elegida.subconcepto)
+      : '<span class="t">Paga</span> <b>' + esc($('caja').value || '—') + '</b> · ' +
+        '<span class="t">se aplica a</span> <b>' + esc(claveCatalogo() || '—') + '</b><br>' +
+        '<span class="t">En el Concentrado queda:</span> ' +
+        esc($('fam').value) + ' — ' + esc(elegida.subconcepto);
+  }
+
+
+  /* ============================================================
+     Envío
+     ============================================================ */
+  function falla(msg) {
+    var a = $('avisoMal');
+    a.textContent = msg;
+    a.hidden = false;
+    $('avisoOk').hidden = true;
+    a.scrollIntoView({ behavior: 'smooth', block: 'center' });
+  }
+
+  function leerArchivos(cb) {
+    var files = [].slice.call($('files').files || []);
+    if (!files.length) { cb([]); return; }
+
+    var out = [], pendientes = files.length;
+    files.forEach(function (f, i) {
+      var fr = new FileReader();
+      fr.onload = function () {
+        out[i] = {
+          nombre: f.name,
+          mime: f.type || 'application/octet-stream',
+          b64: String(fr.result).split(',')[1]
+        };
+        if (--pendientes === 0) cb(out);
+      };
+      fr.onerror = function () {
+        out[i] = null;
+        if (--pendientes === 0) cb(out.filter(Boolean));
+      };
+      fr.readAsDataURL(f);
+    });
+  }
+
+  function enviar(ev) {
+    ev.preventDefault();
+    if (enviando) return;
+
+    $('avisoMal').hidden = true;
+    $('avisoOk').hidden = true;
+
+    var li = $('lider').value;
+    if (li === '')            return falla('Escoge quién solicita.');
+    if (!$('caja').value)     return falla('Escoge la caja que paga.');
+    if (!$('area').value)     return falla('Escoge el área solicitante.');
+
+    if (!$('todas').checked && !$('ninguna').checked && !marcadas().length) {
+      return falla('Marca a qué sucursal se le carga el gasto, o marca "Ninguna".');
+    }
+    if (!elegida)             return falla('Escoge la familia y la subcuenta.');
+    if (!$('colab').value.trim()) return falla('Falta el nombre del colaborador.');
+
+    var importe = Number($('imp').value);
+    if (!importe || importe <= 0) return falla('El importe no es válido.');
+    if (!$('desc').value.trim())  return falla('Escribe la descripción del gasto.');
+
+    var lider = LIDERES[Number(li)];
+    var sucs = marcadas();
+    if ($('todas').checked) sucs = (CAT.cajasQuePagan || []).slice();
+
+    enviando = true;
+    $('btn').disabled = true;
+    $('btn').textContent = 'Enviando…';
+
+    leerArchivos(function (archivos) {
+      var datos = {
+        correo:           lider.correo,
+        sucursal:         $('caja').value,
+        catalogoSucursal: claveCatalogo(),
+        area:             $('area').value,
+        colaborador:      $('colab').value.trim(),
+        proveedor:        $('prov').value.trim(),
+        descripcion:      $('desc').value.trim(),
+        importe:          importe,
+        tipoGasto:        elegida.concepto + ' — ' + elegida.subconcepto,
+        tipoIndice:       elegida.idx,
+        sucursalesAplica: sucs,
+        archivos:         archivos
+      };
+
+      google.script.run
+        .withSuccessHandler(function (r) {
+          enviando = false;
+          $('btn').disabled = false;
+          $('btn').textContent = 'Enviar solicitud';
+
+          if (r && r.ok) {
+            var a = $('avisoOk');
+            a.innerHTML = 'Solicitud registrada con folio <span class="folio">' +
+                          esc(r.folio) + '</span>.<br>' + esc(r.mensaje || '');
+            a.hidden = false;
+            a.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            limpia();
+          } else {
+            falla((r && r.mensaje) || 'No se pudo registrar la solicitud.');
+          }
+        })
+        .withFailureHandler(function (e) {
+          enviando = false;
+          $('btn').disabled = false;
+          $('btn').textContent = 'Enviar solicitud';
+          falla(e && e.message ? e.message : 'No se pudo registrar la solicitud.');
+        })
+        .registrarSolicitud(datos);
+    });
+  }
+
+  function limpia() {
+    $('colab').value = '';
+    $('prov').value = '';
+    $('imp').value = '';
+    $('desc').value = '';
+    $('files').value = '';
+    elegida = null;
+    $('busca').value = '';
+    $('sub').value = '';
+    $('sub').classList.remove('listo');
+    pintaOpciones();
+    pintaCuenta();
+  }
+
+})();
+</script>
+</body>
+</html>

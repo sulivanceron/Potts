@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html>
+<head>
+<base target="_top">
+<style>
+  body{font-family:"Segoe UI",Roboto,Arial,sans-serif;margin:0;padding:12px;background:#f4f6f9;color:#1c2733;font-size:13px}
+  .tabs{display:flex;gap:6px;margin-bottom:12px}
+  .tab{flex:1;padding:9px 6px;text-align:center;border-radius:7px;border:1px solid #d8dee6;background:#fff;cursor:pointer;font-weight:600;font-size:12px}
+  .tab.on{background:#0b3d66;color:#fff;border-color:#0b3d66}
+  .card{background:#fff;border:1px solid #d8dee6;border-radius:9px;padding:11px 12px;margin-bottom:9px}
+  .folio{font-weight:700;color:#0b3d66;font-size:13px}
+  .monto{float:right;font-weight:700;color:#1a7f4b}
+  .meta{color:#5b6773;font-size:12px;margin-top:4px;line-height:1.45}
+  .meta b{color:#1c2733;font-weight:600}
+  .turno{display:inline-block;background:#fff3e0;border:1px solid #f3d9a6;color:#8a5000;
+         border-radius:5px;padding:2px 7px;font-size:11px;margin-top:6px;font-weight:600}
+  .btns{margin-top:9px;display:flex;gap:7px}
+  button{flex:1;border:none;border-radius:6px;padding:9px;font-weight:700;font-size:12px;cursor:pointer;color:#fff}
+  .ok{background:#1f7a3e}.no{background:#b3261e}.ent{background:#12558c}
+  button:disabled{opacity:.5;cursor:not-allowed}
+  a.adj{display:inline-block;margin-top:6px;font-size:12px;color:#12558c}
+  .vacio{text-align:center;color:#6b7785;padding:26px 10px}
+  .aviso{padding:9px 11px;border-radius:7px;font-size:12px;margin-bottom:10px;display:none}
+  .aviso.ok{background:#e7f5ee;border:1px solid #b6e2c8;color:#1a7f4b;display:block}
+  .aviso.err{background:#fdecea;border:1px solid #f5c6c2;color:#b3261e;display:block}
+  .cargando{text-align:center;color:#6b7785;padding:22px}
+  .recargar{width:100%;background:#5b6773;margin-bottom:10px}
+</style>
+</head>
+<body>
+
+<div class="tabs">
+  <div class="tab on" id="tabFirma" onclick="ver('firma')">Por autorizar</div>
+  <div class="tab" id="tabEnt" onclick="ver('entrega')">Por entregar</div>
+</div>
+
+<button class="recargar" onclick="cargar()">↻ Actualizar lista</button>
+<div class="aviso" id="aviso"></div>
+<div id="cont"><div class="cargando">Cargando…</div></div>
+
+<script>
+  var VISTA = 'firma';
+  var DATOS = { firma: [], entrega: [] };
+
+  cargar();
+
+  function ver(v){
+    VISTA = v;
+    document.getElementById('tabFirma').className = 'tab' + (v==='firma'?' on':'');
+    document.getElementById('tabEnt').className   = 'tab' + (v==='entrega'?' on':'');
+    pintar();
+  }
+
+  function cargar(){
+    document.getElementById('cont').innerHTML = '<div class="cargando">Cargando…</div>';
+    google.script.run
+      .withSuccessHandler(function(a){
+        DATOS.firma = a || [];
+        google.script.run
+          .withSuccessHandler(function(b){ DATOS.entrega = b || []; pintar(); })
+          .withFailureHandler(function(e){ DATOS.entrega = []; pintar(); })
+          .getPendientesEntrega();
+      })
+      .withFailureHandler(function(e){ msg('err','Error: '+e.message); })
+      .getPendientesParaFirma();
+  }
+
+  function money(n){
+    return Number(n||0).toLocaleString('es-MX',{style:'currency',currency:'MXN'});
+  }
+
+  function pintar(){
+    var c = document.getElementById('cont');
+    var lista = DATOS[VISTA];
+
+    if(!lista.length){
+      c.innerHTML = '<div class="vacio">' +
+        (VISTA==='firma' ? '✅ No hay nada pendiente de autorizar.'
+                         : '✅ No hay efectivo pendiente de entregar.') + '</div>';
+      return;
+    }
+
+    c.innerHTML = lista.map(function(s){
+      if(VISTA==='firma'){
+        return '<div class="card">' +
+          '<span class="monto">'+money(s.importe)+'</span>' +
+          '<span class="folio">'+s.folio+'</span>' +
+          '<div class="meta">' +
+            '<b>Caja:</b> '+s.sucursal +
+            (s.aplica && s.aplica!==s.sucursal ? '<br><b>Se aplica a:</b> '+s.aplica : '') +
+            '<br><b>Área:</b> '+(s.area||'—')+' &nbsp;·&nbsp; <b>Para:</b> '+(s.colaborador||'—') +
+            '<br><b>Gasto:</b> '+(s.tipo||'—') +
+            (s.concepto ? '<br><b>Concepto:</b> '+s.concepto : '') +
+          '</div>' +
+          '<div class="turno">Turno de: '+s.turno+' · '+s.etapa+'</div>' +
+          (s.adjuntos ? '<br><a class="adj" href="'+s.adjuntos+'" target="_blank">🖼️ Ver cotizaciones y documentos</a>' : '') +
+          '<div class="btns">' +
+            '<button class="ok" onclick="accion(this,\'autorizar\',\''+s.folio+'\')">✓ Autorizar</button>' +
+            '<button class="no" onclick="accion(this,\'rechazar\',\''+s.folio+'\')">✗ Rechazar</button>' +
+          '</div></div>';
+      }
+      return '<div class="card">' +
+        '<span class="monto">'+money(s.importe)+'</span>' +
+        '<span class="folio">'+s.folio+'</span>' +
+        '<div class="meta"><b>Caja:</b> '+s.sucursal +
+          '<br><b>Para:</b> '+(s.colaborador||'—') +
+          '<br><b>Gasto:</b> '+(s.tipo||'—')+'</div>' +
+        '<div class="btns">' +
+          '<button class="ent" onclick="accion(this,\'entregar\',\''+s.folio+'\')">💵 Marcar entregado</button>' +
+        '</div></div>';
+    }).join('');
+  }
+
+  function accion(btn, tipo, folio){
+    if(tipo==='rechazar' && !confirm('¿Rechazar '+folio+'? Se avisa al solicitante.')) return;
+
+    // Se bloquean TODOS los botones: evita doble clic y dobles envíos.
+    var todos = document.querySelectorAll('button');
+    for(var i=0;i<todos.length;i++) todos[i].disabled = true;
+    btn.textContent = 'Procesando…';
+
+    var fn = tipo==='autorizar' ? 'autorizarDesdePanel'
+           : tipo==='rechazar'  ? 'rechazarDesdePanel'
+           : 'entregarDesdePanel';
+
+    google.script.run
+      .withSuccessHandler(function(res){
+        if(res && res.ok){ msg('ok','✅ '+res.mensaje); }
+        else { msg('err','⚠️ '+((res&&res.mensaje)||'No se pudo completar.')); }
+        cargar();
+      })
+      .withFailureHandler(function(e){
+        msg('err','Error: '+e.message);
+        cargar();
+      })
+      [fn](folio);
+  }
+
+  function msg(t, txt){
+    var a = document.getElementById('aviso');
+    a.className = 'aviso '+t;
+    a.textContent = txt;
+  }
+</script>
+</body>
+</html>

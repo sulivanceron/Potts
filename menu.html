@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<base target="_top">
+<style>
+  :root{
+    --azul:#0b3d66; --azul2:#12558c; --acento:#f4a300;
+    --gris:#f4f6f9; --linea:#d8dee6; --texto:#1c2733;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;font-family:"Segoe UI",Roboto,Arial,sans-serif;background:var(--gris);color:var(--texto);min-height:100vh}
+  header{background:linear-gradient(135deg,var(--azul),var(--azul2));color:#fff;padding:34px 16px;text-align:center}
+  header .marca{font-size:14px;letter-spacing:2px;opacity:.85;text-transform:uppercase}
+  header h1{margin:8px 0 2px;font-size:24px}
+  header p{margin:0;font-size:14px;opacity:.9}
+  .wrap{max-width:520px;margin:0 auto;padding:32px 16px}
+  .sub{text-align:center;color:#6b7785;font-size:15px;margin-bottom:26px}
+  .btn{display:flex;align-items:center;gap:16px;width:100%;text-decoration:none;color:var(--texto);
+       background:#fff;border:1px solid var(--linea);border-radius:14px;padding:22px 24px;margin-bottom:18px;
+       box-shadow:0 2px 10px rgba(11,61,102,.06);transition:transform .1s, box-shadow .1s, border-color .1s}
+  .btn:hover{transform:translateY(-2px);box-shadow:0 6px 18px rgba(11,61,102,.12);border-color:var(--azul2)}
+  .ico{font-size:34px;line-height:1;width:54px;height:54px;display:flex;align-items:center;justify-content:center;
+       border-radius:12px;background:var(--gris);flex:none}
+  .txt b{display:block;font-size:18px;color:var(--azul)}
+  .txt span{font-size:13px;color:#6b7785}
+  .pie{text-align:center;color:#9aa4b0;font-size:12px;margin-top:18px}
+</style>
+</head>
+<body>
+  <header>
+    <div class="marca">Grupo Vizcarra</div>
+    <h1>Sistema de Caja Chicaa</h1>
+    <p>Elige qué deseas hacer</p>
+  </header>
+
+  <div class="wrap">
+    <p class="sub">Selecciona una opción para continuar</p>
+
+    <a class="btn" href="https://script.google.com/macros/s/AKfycbwz6U99B1fsJw-Kw7zMjlqzfXMQZ5tveq6GEj1gZk_eJc-bihYB4EJx3sHReUD9zPPF/exec?form=solicitud" target="_top">
+      <div class="ico">📥</div>
+      <div class="txt">
+        <b>Nueva Solicitud</b>
+        <span>Pedir efectivo de caja chica (genera folio y pide autorización)</span>
+      </div>
+    </a>
+
+    <a class="btn" href="https://script.google.com/macros/s/AKfycbwz6U99B1fsJw-Kw7zMjlqzfXMQZ5tveq6GEj1gZk_eJc-bihYB4EJx3sHReUD9zPPF/exec?form=solicitud" target="_top">
+      <div class="ico">✅</div>
+      <div class="txt">
+        <b>Comprobar Gasto</b>
+        <span>Registrar la comprobación y subir la evidencia del gasto</span>
+      </div>
+    </a>
+
+    <p class="pie">Sistema de Control de Caja Chica · Grupo Vizcarra</p>
+  </div>
+</body>
+</html>

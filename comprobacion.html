@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<base target="_top">
+<style>
+  :root{
+    --azul:#0b3d66; --azul2:#12558c; --acento:#f4a300;
+    --gris:#f4f6f9; --linea:#d8dee6; --texto:#1c2733; --ok:#1a7f4b; --err:#b3261e;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;font-family:"Segoe UI",Roboto,Arial,sans-serif;background:var(--gris);color:var(--texto)}
+  .wrap{max-width:640px;margin:0 auto;padding:0 16px 48px}
+  header{background:linear-gradient(135deg,var(--azul),var(--azul2));color:#fff;padding:26px 16px;text-align:center}
+  header .marca{font-size:13px;letter-spacing:2px;opacity:.85;text-transform:uppercase}
+  header h1{margin:6px 0 2px;font-size:22px}
+  header p{margin:0;font-size:13px;opacity:.9}
+  .card{background:#fff;border:1px solid var(--linea);border-radius:12px;padding:22px;margin-top:20px;box-shadow:0 2px 10px rgba(11,61,102,.06)}
+  label{display:block;font-weight:600;font-size:13px;margin:14px 0 6px}
+  .req::after{content:" *";color:var(--err)}
+  input,select,textarea{width:100%;padding:11px 12px;border:1px solid var(--linea);border-radius:8px;font-size:15px;font-family:inherit;background:#fff}
+  input:focus,select:focus,textarea:focus{outline:none;border-color:var(--azul2);box-shadow:0 0 0 3px rgba(18,85,140,.12)}
+  textarea{min-height:70px;resize:vertical}
+  .fila{display:flex;gap:12px}
+  .fila>div{flex:1}
+  .infofolio{background:var(--gris);border:1px dashed var(--linea);border-radius:8px;padding:12px;font-size:13px;margin-top:8px;display:none}
+  .infofolio b{color:var(--azul)}
+  .drop{border:2px dashed var(--linea);border-radius:10px;padding:18px;text-align:center;cursor:pointer;background:#fbfcfe}
+  .drop:hover{border-color:var(--azul2);background:#f2f7fc}
+  .drop small{color:#6b7785}
+  #lista li{font-size:13px;background:var(--gris);border-radius:6px;padding:6px 10px;margin-top:6px;display:flex;justify-content:space-between;align-items:center;list-style:none}
+  #lista{padding:0;margin:8px 0 0}
+  .quitar{color:var(--err);cursor:pointer;font-weight:700;border:none;background:none;font-size:16px}
+  button.enviar{margin-top:22px;width:100%;background:var(--acento);color:#3a2a00;font-weight:700;font-size:16px;border:none;border-radius:9px;padding:14px;cursor:pointer}
+  button.enviar:disabled{opacity:.55;cursor:not-allowed}
+  .msg{margin-top:16px;padding:13px 14px;border-radius:8px;font-size:14px;display:none}
+  .msg.ok{background:#e7f5ee;border:1px solid #b6e2c8;color:var(--ok);display:block}
+  .msg.err{background:#fdecea;border:1px solid #f5c6c2;color:var(--err);display:block}
+  .msg a{color:var(--azul2);font-weight:600}
+  .cargando{display:none;text-align:center;font-size:13px;color:#6b7785;margin-top:12px}
+  .spin{display:inline-block;width:14px;height:14px;border:2px solid var(--linea);border-top-color:var(--azul2);border-radius:50%;animation:g .8s linear infinite;vertical-align:-2px;margin-right:6px}
+  @keyframes g{to{transform:rotate(360deg)}}
+</style>
+</head>
+<body>
+  <header>
+    <div class="marca">Grupo Vizcarra</div>
+    <h1>Comprobación del Gasto</h1>
+    <p>Sistema de Control de Caja Chica</p>
+  </header>
+
+  <div class="wrap">
+    <div class="card">
+      <form id="form" onsubmit="return false;">
+
+        <label class="req" for="folio">Folio a comprobar</label>
+        <select id="folio" required>
+          <option value="">Cargando folios…</option>
+        </select>
+        <div class="infofolio" id="infofolio"></div>
+
+        <div class="fila">
+          <div>
+            <label class="req" for="importe">Importe realmente comprobado</label>
+            <input type="number" id="importe" step="0.01" min="0" placeholder="0.00" required>
+          </div>
+          <div>
+            <label class="req" for="fecha">Fecha de comprobación</label>
+            <input type="date" id="fecha" required>
+          </div>
+        </div>
+
+        <label for="obs">Observaciones</label>
+        <textarea id="obs" placeholder="Notas relevantes para auditoría (opcional)"></textarea>
+
+        <label class="req">Evidencia (ticket, nota, foto…)</label>
+        <div class="drop" id="drop" onclick="document.getElementById('files').click()">
+          <div>📎 Da clic para seleccionar archivos</div>
+          <small>PDF, JPG o PNG · puedes subir varios</small>
+        </div>
+        <input type="file" id="files" multiple accept=".pdf,.jpg,.jpeg,.png,image/*,application/pdf" style="display:none">
+        <ul id="lista"></ul>
+
+        <button type="button" class="enviar" id="btn" onclick="enviar()">Registrar comprobación</button>
+        <div class="cargando" id="cargando"><span class="spin"></span>Subiendo evidencia y registrando…</div>
+        <div class="msg" id="msg"></div>
+      </form>
+    </div>
+  </div>
+
+<script>
+  var FOLIOS = [];
+  var ARCHIVOS = [];
+
+  (function(){
+    var d=new Date(), m=('0'+(d.getMonth()+1)).slice(-2), dd=('0'+d.getDate()).slice(-2);
+    document.getElementById('fecha').value = d.getFullYear()+'-'+m+'-'+dd;
+  })();
+
+  google.script.run
+    .withSuccessHandler(pintarFolios)
+    .withFailureHandler(function(e){ setMsg('err','No se pudieron cargar los folios: '+e.message); })
+    .getFoliosParaComprobar();
+
+  function pintarFolios(lista){
+    FOLIOS = lista || [];
+    var sel = document.getElementById('folio');
+    if(!FOLIOS.length){ sel.innerHTML='<option value="">No hay folios pendientes de comprobar</option>'; return; }
+    var html='<option value="">Selecciona un folio…</option>';
+    FOLIOS.forEach(function(f){
+      // Se muestra QUIÉN solicitó, para que no se equivoquen de folio.
+      var quien = f.colaborador ? String(f.colaborador).trim() : '';
+      html += '<option value="'+f.folio+'">'+f.folio+' — '+f.sucursal+
+              ' — '+(quien || 'sin nombre')+
+              ' ($'+Number(f.importe).toLocaleString('es-MX',{minimumFractionDigits:2})+')</option>';
+    });
+    sel.innerHTML = html;
+  }
+
+  document.getElementById('folio').addEventListener('change', function(){
+    var f = FOLIOS.filter(function(x){return x.folio===this.value;}.bind(this))[0];
+    var box = document.getElementById('infofolio');
+    if(!f){ box.style.display='none'; return; }
+    box.style.display='block';
+    box.innerHTML = '<b>Sucursal:</b> '+f.sucursal+' &nbsp;·&nbsp; <b>Colaborador:</b> '+(f.colaborador||'—')+
+                    '<br><b>Importe autorizado:</b> $'+Number(f.importe).toLocaleString('es-MX',{minimumFractionDigits:2})+
+                    (f.concepto?'<br><b>Concepto:</b> '+f.concepto:'');
+    if(!document.getElementById('importe').value) document.getElementById('importe').value = f.importe;
+  });
+
+  document.getElementById('files').addEventListener('change', function(e){
+    var files = e.target.files;
+    for(var i=0;i<files.length;i++){ leerArchivo(files[i]); }
+    e.target.value='';
+  });
+
+  function leerArchivo(file){
+    if(file.size > 25*1024*1024){ setMsg('err','El archivo "'+file.name+'" supera 25 MB.'); return; }
+    var r = new FileReader();
+    r.onload = function(){
+      ARCHIVOS.push({ nombre:file.name, mime:file.type||'application/octet-stream', b64:r.result.split(',')[1] });
+      pintarLista();
+    };
+    r.readAsDataURL(file);
+  }
+
+  function pintarLista(){
+    var ul=document.getElementById('lista'); ul.innerHTML='';
+    ARCHIVOS.forEach(function(a,i){
+      var li=document.createElement('li');
+      li.innerHTML='<span>📄 '+a.nombre+'</span>';
+      var b=document.createElement('button'); b.className='quitar'; b.type='button'; b.textContent='×';
+      b.onclick=function(){ ARCHIVOS.splice(i,1); pintarLista(); };
+      li.appendChild(b); ul.appendChild(li);
+    });
+  }
+
+  function setMsg(tipo, texto){
+    var m=document.getElementById('msg'); m.className='msg '+tipo; m.innerHTML=texto;
+  }
+
+  function enviar(){
+    var folio=document.getElementById('folio').value;
+    var importe=document.getElementById('importe').value;
+    var fecha=document.getElementById('fecha').value;
+
+    if(!folio){ setMsg('err','Selecciona un folio.'); return; }
+    if(!importe || Number(importe)<=0){ setMsg('err','Captura un importe comprobado válido.'); return; }
+    if(!ARCHIVOS.length){ setMsg('err','Debes adjuntar al menos una evidencia.'); return; }
+
+    document.getElementById('btn').disabled=true;
+    document.getElementById('cargando').style.display='block';
+    document.getElementById('msg').className='msg';
+
+    google.script.run
+      .withSuccessHandler(function(res){
+        document.getElementById('cargando').style.display='none';
+        document.getElementById('btn').disabled=false;
+        if(res.ok){
+          setMsg('ok', '✅ '+res.mensaje+'<br><a href="'+res.carpetaUrl+'" target="_blank">Ver carpeta de evidencia en Drive »</a>');
+          document.getElementById('form').reset();
+          ARCHIVOS=[]; pintarLista(); document.getElementById('infofolio').style.display='none';
+          var d2=new Date(), m2=('0'+(d2.getMonth()+1)).slice(-2), dd2=('0'+d2.getDate()).slice(-2);
+          document.getElementById('fecha').value = d2.getFullYear()+'-'+m2+'-'+dd2;
+          google.script.run.withSuccessHandler(pintarFolios).getFoliosParaComprobar();
+        } else {
+          setMsg('err','⚠️ '+res.mensaje);
+        }
+      })
+      .withFailureHandler(function(e){
+        document.getElementById('cargando').style.display='none';
+        document.getElementById('btn').disabled=false;
+        setMsg('err','Error: '+e.message);
+      })
+      .registrarComprobacion({
+        folio:folio, importeComprobado:importe, fecha:fecha,
+        observaciones:document.getElementById('obs').value, archivos:ARCHIVOS
+      });
+  }
+</script>
+</body>
+</html>
