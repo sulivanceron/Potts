@@ -1,5 +1,5 @@
 /**********************************************************************
- * AdjuntosAppSheet.gs — ENCONTRAR EL PDF DE LA ORDEN DE COMPRA
+ * AdjuntosAppSheet.gs — ENCONTRAR EL PDF DE LA ORDEN DE COMPRA A PARTIR DE LA RUTA QUE MANDA APPSHEET
  *
  * EL PROBLEMA: AppSheet no manda una URL ni un ID de Drive. Manda una
  * RUTA RELATIVA dentro de la carpeta de la app, así:
